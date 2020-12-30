@@ -1,0 +1,4 @@
+apps:
+  - name: 'petstore_node'
+    script: ./node_modules/webpack-dev-server/bin/webpack-dev-server.js
+    args: '--inline --progress --config ./build/webpack.dev.conf.js'
