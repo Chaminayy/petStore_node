@@ -23,8 +23,6 @@ function handleError () {
   });
   
   db.on('error', function (err) {
-    console.log(err.code)
-    console.log(err.code === 'PROTOCOL_CONNECTION_LOST')
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
       handleError();
     } else {
@@ -60,6 +58,10 @@ app.post('/', (req, res, next) => {
       } else {
         let user = req.body.params
         if (+user.phoneNumber === data[0]['phone_number'] && +user.password === data[0]['password']) {
+          result.user = {
+            userName: data[0]['username'],
+            userPhone: data[0]['phone_number']
+          }
           res.send(result)
         } else {
           result.code = 401
