@@ -1,4 +1,5 @@
 const express = require('express')
+const jwt = require('jsonwebtoken')
 const bodyParser = require('body-parser')
 const app = express()
 const mysql = require('mysql')
@@ -43,7 +44,7 @@ app.all('*', function(req, res, next) {
 });
 
 app.post('/', (req, res, next) => {
-  db.query(`SELECT * FROM test_user WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
+  db.query(`SELECT * FROM user_info WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
     if (err) {
       console.log('数据库访问出错', err)
     } else {
@@ -57,11 +58,19 @@ app.post('/', (req, res, next) => {
         res.send(result)
       } else {
         let user = req.body.params
-        if (+user.phoneNumber === data[0]['phone_number'] && +user.password === data[0]['password']) {
+        if (+user.phoneNumber === data[0]['phone_number'] && user.password === data[0]['password']) {
+          let content = {phone: user.phoneNumber}
+          let secretOrPrivateKey = 'jiami'
+          let token = jwt.sign(content, secretOrPrivateKey, {
+            expiresIn: 60*60*1
+          })
+          data[0].token = token
           result.user = {
             userName: data[0]['username'],
-            userPhone: data[0]['phone_number']
+            userPhone: data[0]['phone_number'],
+            token: token
           }
+          db.query(`UPDATE user_info SET token = '${token}' WHERE phone_number = ${req.body.params.phoneNumber}`)
           res.send(result)
         } else {
           result.code = 401
