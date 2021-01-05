@@ -43,17 +43,17 @@ app.all('*', function(req, res, next) {
   next();
 });
 
-app.post('/', (req, res, next) => {
+app.post('/api/login', (req, res, next) => {
   db.query(`SELECT * FROM user_info WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
     if (err) {
       console.log('数据库访问出错', err)
     } else {
       let result = {
-        code: 200,
+        code: 200, // 登录成功
         message: '登录成功'
       }
       if (data.length === 0) {
-        result.code = 404
+        result.code = 404 // 账号不存在
         result.message = '账号不存在'
         res.send(result)
       } else {
@@ -62,7 +62,7 @@ app.post('/', (req, res, next) => {
           let content = {phone: user.phoneNumber}
           let secretOrPrivateKey = 'jiami'
           let token = jwt.sign(content, secretOrPrivateKey, {
-            expiresIn: 60*60*1
+            expiresIn: 60 * 60 * 60 * 1
           })
           data[0].token = token
           result.user = {
@@ -73,11 +73,37 @@ app.post('/', (req, res, next) => {
           db.query(`UPDATE user_info SET token = '${token}' WHERE phone_number = ${req.body.params.phoneNumber}`)
           res.send(result)
         } else {
-          result.code = 401
+          result.code = 401 // 账号或密码错误
           result.message = '账号或密码错误'
           res.send(result)
         }
       }
+    }
+  })
+})
+app.post('/api/loginCheck', (req, res, next) => {
+  let user = req.body.params
+  let result = {
+    code: 200,
+    message: '登录成功'
+  }
+  db.query(`SELECT * FROM user_info WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
+    const queryData = data
+    if (+user.phoneNumber === data[0]['phone_number'] && user.token === data[0]['token']) {
+      let secretOrPrivateKey = 'jiami'
+      jwt.verify(user.token, secretOrPrivateKey, (err, data) => {
+        if (err) {
+          result.code = 500 // 登录失效
+          result.message = '登录失效'
+          res.send(result)
+        } else {
+          result.user = {
+            userName: queryData[0]['username'],
+            userPhone: queryData[0]['phone_number']
+          }
+          res.send(result)
+        }
+      })
     }
   })
 })
