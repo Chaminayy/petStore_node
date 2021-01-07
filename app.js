@@ -2,37 +2,19 @@ const express = require('express')
 const jwt = require('jsonwebtoken')
 const bodyParser = require('body-parser')
 const app = express()
-const mysql = require('mysql')
+
+const connect = require('./src/dbConnect/index').handleError
+const login = require("./src/repository/login/login").login;
+const checkLogin = require('./src/repository/checkLogin/checkLogin').checkLogin
+const register = require('./src/repository/register/register').register
+const sendMail = require('./src/repository/register/sendMail').sendMail
+const checkRegister = require('./src/repository/register/registerCheck').registerCheck
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
-let db
-function handleError () {
-  db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'test'
-  })
-  
-  //连接错误，2秒重试
-  db.connect(function (err) {
-    if (err) {
-      setTimeout(handleError , 2000);
-    }
-  });
-  
-  db.on('error', function (err) {
-    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-      handleError();
-    } else {
-      throw err;
-    }
-  });
-}
 
-handleError();
+const db = connect();
 
 app.all('*', function(req, res, next) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -44,68 +26,62 @@ app.all('*', function(req, res, next) {
 });
 
 app.post('/api/login', (req, res, next) => {
-  db.query(`SELECT * FROM user_info WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
+  login(req, res, db)
+})
+app.post('/api/loginCheck', (req, res, next) => {
+  checkLogin(req, res, db)
+})
+
+app.post('/api/registerCheck', (req, res, next) => {
+  checkRegister(req, res, db)
+})
+
+let time = null // 全局存储时间戳
+let code = null // 全局存储验证码
+
+app.post('/api/sendMail', (req, res, next) => {
+  let email = req.body.params.email
+  code = Math.floor(Math.random() * 1000000)
+  time = new Date().getTime()
+  sendMail(email, '验证码', code, (err, data) => {
     if (err) {
-      console.log('数据库访问出错', err)
+      console.log(err)
+      let result = {
+        code: 500,
+        message: '验证码发送失败'
+      }
+      res.send(result)
     } else {
       let result = {
-        code: 200, // 登录成功
-        message: '登录成功'
+        code: 200,
+        message: '验证码发送成功'
       }
-      if (data.length === 0) {
-        result.code = 404 // 账号不存在
-        result.message = '账号不存在'
-        res.send(result)
-      } else {
-        let user = req.body.params
-        if (+user.phoneNumber === data[0]['phone_number'] && user.password === data[0]['password']) {
-          let content = {phone: user.phoneNumber}
-          let secretOrPrivateKey = 'jiami'
-          let token = jwt.sign(content, secretOrPrivateKey, {
-            expiresIn: 60 * 60 * 60 * 1
-          })
-          data[0].token = token
-          result.user = {
-            userName: data[0]['username'],
-            userPhone: data[0]['phone_number'],
-            token: token
-          }
-          db.query(`UPDATE user_info SET token = '${token}' WHERE phone_number = ${req.body.params.phoneNumber}`)
-          res.send(result)
-        } else {
-          result.code = 401 // 账号或密码错误
-          result.message = '账号或密码错误'
-          res.send(result)
-        }
-      }
+      res.send(result)
     }
   })
 })
-app.post('/api/loginCheck', (req, res, next) => {
-  let user = req.body.params
-  let result = {
-    code: 200,
-    message: '登录成功'
-  }
-  db.query(`SELECT * FROM user_info WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
-    const queryData = data
-    if (+user.phoneNumber === data[0]['phone_number'] && user.token === data[0]['token']) {
-      let secretOrPrivateKey = 'jiami'
-      jwt.verify(user.token, secretOrPrivateKey, (err, data) => {
-        if (err) {
-          result.code = 500 // 登录失效
-          result.message = '登录失效'
-          res.send(result)
-        } else {
-          result.user = {
-            userName: queryData[0]['username'],
-            userPhone: queryData[0]['phone_number']
-          }
-          res.send(result)
-        }
-      })
+
+app.post('/api/register', (req, res, next) => {
+  let registerInfo = req.body.params
+  let ctime = new Date().getTime()
+  console.log(ctime - time)
+  if (ctime - time >= 30 * 60 * 1000) {
+    let result = {
+      code: 600,
+      message: '验证码过期'
     }
-  })
+    res.send(result)
+  } else {
+    if (code === +registerInfo.code) {
+      register(req, res, db)
+    } else {
+      let result = {
+        code: 400,
+        message: '验证码错误'
+      }
+      res.send(result)
+    }
+  }
 })
 
 app.listen(3000, () => {
