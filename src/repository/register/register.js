@@ -1,6 +1,6 @@
 module.exports.register = function (req, res ,db) {
   let registerInfo = req.body.params
-  let sql = `INSERT INTO user_info (phone_number, username, password, email) VALUES ('${registerInfo.phoneNumber}', '${registerInfo.username}', '${registerInfo.password}', '${registerInfo.email}')`
+  let sql = `INSERT INTO ${globalThis.userInfoTable} (phone_number, username, password, email) VALUES ('${registerInfo.phoneNumber}', '${registerInfo.username}', '${registerInfo.password}', '${registerInfo.email}')`
   db.query(sql, (err, data) => {
     if (err) {
       console.log(err)

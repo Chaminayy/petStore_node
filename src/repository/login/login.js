@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 module.exports.login = function(req, res, db) {
-  db.query(`SELECT * FROM user_info WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
+  console.log(globalThis.userInfoTable)
+  db.query(`SELECT * FROM ${globalThis.userInfoTable} WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
     if (err) {
       console.log('数据库访问出错', err)
     } else {

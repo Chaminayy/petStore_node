@@ -24,5 +24,4 @@ handleError = function () {
   });
   return db;
 }
-
 module.exports.handleError = handleError
