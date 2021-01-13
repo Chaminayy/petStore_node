@@ -1,9 +1,15 @@
 const jwt = require('jsonwebtoken')
 module.exports.login = function(req, res, db) {
-  console.log(globalThis.userInfoTable)
   db.query(`SELECT * FROM ${globalThis.userInfoTable} WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
     if (err) {
-      console.log('数据库访问出错', err)
+      console.log(err)
+      let result = {
+        code: 500,
+        message: '服务异常',
+        err: err
+      }
+      res.send(result)
+      
     } else {
       let result = {
         code: 200, // 登录成功
@@ -27,7 +33,7 @@ module.exports.login = function(req, res, db) {
             userPhone: data[0]['phone_number'],
             token: token
           }
-          db.query(`UPDATE user_info SET token = '${token}' WHERE phone_number = ${req.body.params.phoneNumber}`)
+          db.query(`UPDATE ${globalThis.userInfoTable} SET token = '${token}' WHERE phone_number = ${req.body.params.phoneNumber}`)
           res.send(result)
         } else {
           result.code = 401 // 账号或密码错误

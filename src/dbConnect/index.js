@@ -1,4 +1,6 @@
 const mysql = require('mysql')
+
+
 handleError = function () {
   let db
   db = mysql.createConnection({
@@ -7,7 +9,6 @@ handleError = function () {
     password: 'root',
     database: 'test'
   })
-  
   //连接错误，2秒重试
   db.connect(function (err) {
     if (err) {

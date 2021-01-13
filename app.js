@@ -5,14 +5,16 @@ const app = express()
 const connect = require('./src/dbConnect/index').handleError
 
 globalThis.userInfoTable = 'user_info'
+console.log(globalThis)
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 
-const db = connect();
+let db;
 
 app.all('*', function(req, res, next) {
+  db = connect()
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "*");
@@ -27,7 +29,15 @@ app.post('/api/login', (req, res, next) => {
 })
 app.post('/api/loginCheck', (req, res, next) => {
   const checkLogin = require('./src/repository/checkLogin/checkLogin').checkLogin
-  checkLogin(req, res, db)
+  if (req.body.params.phoneNumber !== null) {
+    checkLogin(req, res, db)
+  } else {
+    let result = {
+      code: 500,
+      message: '请先登录'
+    }
+    res.send(result)
+  }
 })
 
 app.post('/api/registerCheck', (req, res, next) => {
