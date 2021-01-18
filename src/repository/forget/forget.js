@@ -9,8 +9,10 @@ module.exports.forget = function (req, res, db) {
       result.code = 500
       result.message = '服务异常'
       res.send(result)
+      db.end()
     } else {
       res.send(result)
+      db.end()
     }
   })
 }

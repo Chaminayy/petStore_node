@@ -1,10 +1,10 @@
 const mysql = require('mysql')
-
+globalThis.userInfoTable = 'user_info'
 
 handleError = function () {
   let db
   db = mysql.createConnection({
-    host: 'localhost',
+    host: '121.196.167.112',
     user: 'root',
     password: 'root',
     database: 'test'
@@ -20,7 +20,8 @@ handleError = function () {
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
       handleError();
     } else {
-      throw err;
+      console.log(err)
+      handleError()
     }
   });
   return db;

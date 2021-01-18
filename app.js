@@ -1,17 +1,18 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
+const fs = require('fs')
 
+const utils = require('./src/utils/index')
 const connect = require('./src/dbConnect/index').handleError
-
-globalThis.userInfoTable = 'user_info'
-console.log(globalThis)
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
+globalThis.userInfoTable = 'user_info'
+globalThis.productImage = 'product_supplies'
 
-let db;
+let db = connect();
 
 app.all('*', function(req, res, next) {
   db = connect()
@@ -22,28 +23,6 @@ app.all('*', function(req, res, next) {
   res.setHeader("Access-Control-Expose-Headers", "*");
   next();
 });
-
-app.post('/api/login', (req, res, next) => {
-  const login = require("./src/repository/login/login").login;
-  login(req, res, db)
-})
-app.post('/api/loginCheck', (req, res, next) => {
-  const checkLogin = require('./src/repository/checkLogin/checkLogin').checkLogin
-  if (req.body.params.phoneNumber !== null) {
-    checkLogin(req, res, db)
-  } else {
-    let result = {
-      code: 500,
-      message: '请先登录'
-    }
-    res.send(result)
-  }
-})
-
-app.post('/api/registerCheck', (req, res, next) => {
-  const checkRegister = require('./src/repository/register/registerCheck').registerCheck
-  checkRegister(req, res, db)
-})
 
 let time = null // 全局存储时间戳
 let code = null // 全局存储验证码
@@ -71,6 +50,30 @@ function sendEMail (req, res, next) {
     }
   })
 }
+app.post('/api/login', (req, res, next) => {
+  const login = require("./src/repository/login/login").login;
+  login(req, res, db)
+})
+
+app.post('/api/loginCheck', (req, res, next) => {
+  const checkLogin = require('./src/repository/checkLogin/checkLogin').checkLogin
+  if (req.body.params.phoneNumber !== null && req.body.params.phoneNumber !== 'null') {
+    checkLogin(req, res, db)
+  } else {
+    let result = {
+      code: 500,
+      message: '请先登录'
+    }
+    res.send(result)
+    db.end()
+  }
+})
+
+app.post('/api/registerCheck', (req, res, next) => {
+  const checkRegister = require('./src/repository/register/registerCheck').registerCheck
+  checkRegister(req, res, db)
+})
+
 app.post('/api/sendMail', (req, res, next) => {
   sendEMail(req, res, next)
 })
@@ -90,6 +93,7 @@ app.post('/api/register', (req, res, next) => {
       message: '验证码过期'
     }
     res.send(result)
+    db.end()
   } else {
     if (code === +registerInfo.code) {
       register(req, res, db)
@@ -99,6 +103,7 @@ app.post('/api/register', (req, res, next) => {
         message: '验证码错误'
       }
       res.send(result)
+      db.end()
     }
   }
 })
@@ -113,7 +118,30 @@ app.post('/api/forget', (req, res, next) => {
       message: '两次密码不一致'
     }
     res.send(result)
+    db.end()
   }
+})
+
+app.get('/product/getImas', (req, res, next) => {
+  db.query(`SELECT * FROM ${globalThis.productImage}`, (err, data) => {
+    let result = {
+      code: 200,
+    }
+    if (err) {
+      console.log(err)
+      result.code = 500
+      result.message = '服务器异常'
+      res.send(result)
+      db.end()
+    } else {
+      res.send(data)
+      db.end()
+    }
+  })
+})
+
+app.get('/product/getIma', (req, res, next) => {
+  utils.getImage(req, res ,db)
 })
 
 app.listen(3000, () => {

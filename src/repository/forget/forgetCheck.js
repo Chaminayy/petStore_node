@@ -7,6 +7,7 @@ module.exports.forgetCheck = function (req, res, db, callback) {
     if (err) {
       console.log(err)
       res.send(result)
+      db.end()
     } else {
       if (data.length > 0) {
         result.code = 200
@@ -16,6 +17,7 @@ module.exports.forgetCheck = function (req, res, db, callback) {
         result.code = 300
         result.message = '账号与邮箱不匹配'
         res.send(result)
+        db.end()
       }
     }
     

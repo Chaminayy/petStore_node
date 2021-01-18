@@ -9,7 +9,7 @@ module.exports.login = function(req, res, db) {
         err: err
       }
       res.send(result)
-      
+      db.end()
     } else {
       let result = {
         code: 200, // 登录成功
@@ -19,6 +19,7 @@ module.exports.login = function(req, res, db) {
         result.code = 404 // 账号不存在
         result.message = '账号不存在'
         res.send(result)
+        db.end()
       } else {
         let user = req.body.params
         if (user.phoneNumber === data[0]['phone_number'] && user.password === data[0]['password']) {
@@ -35,10 +36,12 @@ module.exports.login = function(req, res, db) {
           }
           db.query(`UPDATE ${globalThis.userInfoTable} SET token = '${token}' WHERE phone_number = ${req.body.params.phoneNumber}`)
           res.send(result)
+          db.end()
         } else {
           result.code = 401 // 账号或密码错误
           result.message = '账号或密码错误'
           res.send(result)
+          db.end()
         }
       }
     }

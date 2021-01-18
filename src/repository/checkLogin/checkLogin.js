@@ -9,8 +9,10 @@ checkLogin = function (req, res, db) {
   db.query(`SELECT * FROM ${globalThis.userInfoTable} WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
     if (err) {
       result.code = 500
-      result.message = '登录失效'
+      result.message = '服务异常'
+      result.err = err
       res.send(result)
+      db.end()
     } else {
       if (data.length !== 0) {
         const queryData = data
@@ -20,13 +22,16 @@ checkLogin = function (req, res, db) {
             if (err) {
               result.code = 500 // 登录失效
               result.message = '登录失效'
+              result.err = err
               res.send(result)
+              db.end()
             } else {
               result.user = {
                 userName: queryData[0]['username'],
                 userPhone: queryData[0]['phone_number']
               }
               res.send(result)
+              db.end()
             }
           })
         }
@@ -34,6 +39,7 @@ checkLogin = function (req, res, db) {
         result.code = 500
         result.message = '服务异常'
         res.send(result)
+        db.end()
       }
     }
   })

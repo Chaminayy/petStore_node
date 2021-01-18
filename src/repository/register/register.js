@@ -9,12 +9,26 @@ module.exports.register = function (req, res ,db) {
         err: err
       }
       res.send(result)
+      db.end()
     } else {
-      let result = {
-        code: 200,
-        message: '注册成功'
-      }
-      res.send(result)
+      db.query(`INSERT INTO profiles (phone_number, username, email) VALUES ('${registerInfo.phoneNumber}', '${registerInfo.username}', '${registerInfo.email}')`, (err, data) => {
+        if (err) {
+          console.log(err)
+          let result = {
+            code: 400,
+            message: '服务器异常',
+            err: err
+          }
+        } else {
+          let result = {
+            code: 200,
+            message: '注册成功'
+          }
+          res.send(result)
+          db.end()
+        }
+      })
     }
   })
 }
+
