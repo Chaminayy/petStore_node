@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
 module.exports.login = function(req, res, db) {
-  db.query(`SELECT * FROM ${globalThis.userInfoTable} WHERE phone_number = ${req.body.params.phoneNumber}`, (err, data) => {
+  db.query(`SELECT * FROM ${globalThis.userInfoTable} WHERE phone_number = '${req.body.params.phoneNumber}'`, (err, data) => {
     if (err) {
       console.log(err)
       let result = {
@@ -34,7 +34,7 @@ module.exports.login = function(req, res, db) {
             userPhone: data[0]['phone_number'],
             token: token
           }
-          db.query(`UPDATE ${globalThis.userInfoTable} SET token = '${token}' WHERE phone_number = ${req.body.params.phoneNumber}`)
+          db.query(`UPDATE ${globalThis.userInfoTable} SET token = '${token}' WHERE phone_number = '${req.body.params.phoneNumber}'`)
           res.send(result)
           db.end()
         } else {

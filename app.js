@@ -11,6 +11,7 @@ app.use(bodyParser.json())
 
 globalThis.userInfoTable = 'user_info'
 globalThis.productImage = 'product_supplies'
+globalThis.profiles = 'profiles'
 
 let db = connect();
 
@@ -23,6 +24,9 @@ app.all('*', function(req, res, next) {
   res.setHeader("Access-Control-Expose-Headers", "*");
   next();
 });
+app.listen(3000, () => {
+  console.log('server is running in post 3000')
+})
 
 let time = null // 全局存储时间戳
 let code = null // 全局存储验证码
@@ -144,6 +148,59 @@ app.get('/product/getIma', (req, res, next) => {
   utils.getImage(req, res ,db)
 })
 
-app.listen(3000, () => {
-  console.log('server is running in post 3000')
+app.get('/profiles/changeDatum', (req, res, next) => {
+  db.query(`SELECT * FROM ${globalThis.profiles} WHERE phone_number = '${req.query.phoneNumber}'`, (err, data) => {
+    let result = {
+      code: 200,
+      profiles: {}
+    }
+    if (err) {
+      console.log(err)
+      result.code = 500
+      result.message = '服务器异常'
+      res.send(result)
+      db.end()
+    } else {
+      if (data.length === 0) {
+        result.code = 400
+        result.message = '服务器异常'
+        res.send(result)
+        db.end()
+      } else {
+        result.profiles = data[0]
+        res.send(result)
+        db.end()
+      }
+    }
+  })
+})
+
+app.post('/profiles/saveDatum', (req, res, next) => {
+  db.query(`UPDATE ${globalThis.profiles} SET username = '${req.body.params.username}', mark = '${req.body.params.mark}', birthday = '${req.body.params.birthday}', occupation = '${req.body.params.occupation}', city='${req.body.params.city}' WHERE phone_number = '${req.body.params.phoneNumber}'`, (err, data) => {
+    let result = {
+      code: 200,
+      message: '保存成功'
+    }
+    if (err) {
+      console.log(err)
+      result.code = 500
+      result.message = '保存失败，服务器异常'
+      res.send(result)
+    } else {
+      db.query(`UPDATE ${globalThis.userInfoTable} SET username = '${req.body.params.username}' WHERE phone_number = '${req.body.params.phoneNumber}'`, (err, data) => {
+        if (err) {
+          console.log(err)
+          result.code = 500
+          result.message = '保存失败，服务器异常'
+          res.send(result)
+        } else {
+          result.user = {
+            userName: req.body.params.username,
+            userPhone: req.body.params.phoneNumber
+          }
+          res.send(result)
+        }
+      })
+    }
+  })
 })
