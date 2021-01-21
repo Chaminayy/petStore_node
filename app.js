@@ -2,6 +2,9 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
 const fs = require('fs')
+const formidable = require('formidable')
+const path = require('path')
+
 
 const utils = require('./src/utils/index')
 const connect = require('./src/dbConnect/index').handleError
@@ -54,6 +57,8 @@ function sendEMail (req, res, next) {
     }
   })
 }
+
+
 app.post('/api/login', (req, res, next) => {
   const login = require("./src/repository/login/login").login;
   login(req, res, db)
@@ -149,58 +154,22 @@ app.get('/product/getIma', (req, res, next) => {
 })
 
 app.get('/profiles/changeDatum', (req, res, next) => {
-  db.query(`SELECT * FROM ${globalThis.profiles} WHERE phone_number = '${req.query.phoneNumber}'`, (err, data) => {
-    let result = {
-      code: 200,
-      profiles: {}
-    }
-    if (err) {
-      console.log(err)
-      result.code = 500
-      result.message = '服务器异常'
-      res.send(result)
-      db.end()
-    } else {
-      if (data.length === 0) {
-        result.code = 400
-        result.message = '服务器异常'
-        res.send(result)
-        db.end()
-      } else {
-        result.profiles = data[0]
-        res.send(result)
-        db.end()
-      }
-    }
-  })
+  const changeDatum = require('./src/repository/profiles/changeDatum').changeDatum
+  changeDatum(req, res, db)
 })
 
 app.post('/profiles/saveDatum', (req, res, next) => {
-  db.query(`UPDATE ${globalThis.profiles} SET username = '${req.body.params.username}', mark = '${req.body.params.mark}', birthday = '${req.body.params.birthday}', occupation = '${req.body.params.occupation}', city='${req.body.params.city}' WHERE phone_number = '${req.body.params.phoneNumber}'`, (err, data) => {
-    let result = {
-      code: 200,
-      message: '保存成功'
-    }
-    if (err) {
-      console.log(err)
-      result.code = 500
-      result.message = '保存失败，服务器异常'
-      res.send(result)
-    } else {
-      db.query(`UPDATE ${globalThis.userInfoTable} SET username = '${req.body.params.username}' WHERE phone_number = '${req.body.params.phoneNumber}'`, (err, data) => {
-        if (err) {
-          console.log(err)
-          result.code = 500
-          result.message = '保存失败，服务器异常'
-          res.send(result)
-        } else {
-          result.user = {
-            userName: req.body.params.username,
-            userPhone: req.body.params.phoneNumber
-          }
-          res.send(result)
-        }
-      })
-    }
-  })
+  const saveDatum = require('./src/repository/profiles/saveDatum').saveDatum
+  saveDatum(req, res, db)
+})
+
+app.post('/profiles/changePassword', (req, res, next) => {
+  const changePassword = require('./src/repository/profiles/changePassword').changePassword
+  changePassword(req, res, db)
+})
+
+
+app.post('/profiles/avatar', (req, res, next) => {
+  const avatar = require('./src/repository/profiles/avatar').avatar
+  avatar(req, res, db)
 })
