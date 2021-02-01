@@ -1,25 +1,21 @@
-const express = require('express')
-const bodyParser = require('body-parser')
-const app = express()
-const fs = require('fs')
-const formidable = require('formidable')
-const path = require('path')
+const express = require('express');
+const bodyParser = require('body-parser');
+const app = express();
 
+const utils = require('./src/utils/index');
+const connect = require('./src/dbConnect/index').handleError;
 
-const utils = require('./src/utils/index')
-const connect = require('./src/dbConnect/index').handleError
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
-
-globalThis.userInfoTable = 'user_info'
-globalThis.productImage = 'product_supplies'
-globalThis.profiles = 'profiles'
+globalThis.userInfoTable = 'user_info';
+globalThis.productImage = 'product_supplies';
+globalThis.profiles = 'profiles';
 
 let db = connect();
 
 app.all('*', function(req, res, next) {
-  db = connect()
+  db = connect();
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "*");
@@ -29,10 +25,10 @@ app.all('*', function(req, res, next) {
 });
 app.listen(3000, () => {
   console.log('server is running in post 3000')
-})
+});
 
-let time = null // 全局存储时间戳
-let code = null // 全局存储验证码
+let time = null; // 全局存储时间戳
+let code = null; // 全局存储验证码
 
 function sendEMail (req, res, next) {
   const sendMail = require('./src/repository/register/sendMail').sendMail
@@ -62,7 +58,7 @@ function sendEMail (req, res, next) {
 app.post('/api/login', (req, res, next) => {
   const login = require("./src/repository/login/login").login;
   login(req, res, db)
-})
+});
 
 app.post('/api/loginCheck', (req, res, next) => {
   const checkLogin = require('./src/repository/checkLogin/checkLogin').checkLogin
@@ -76,21 +72,21 @@ app.post('/api/loginCheck', (req, res, next) => {
     res.send(result)
     db.end()
   }
-})
+});
 
 app.post('/api/registerCheck', (req, res, next) => {
   const checkRegister = require('./src/repository/register/registerCheck').registerCheck
   checkRegister(req, res, db)
-})
+});
 
 app.post('/api/sendMail', (req, res, next) => {
   sendEMail(req, res, next)
-})
+});
 
 app.post('/api/forgetSendMail', (req, res, next) => {
   const checkForget = require('./src/repository/forget/forgetCheck').forgetCheck
   checkForget(req, res, db, sendEMail)
-})
+});
 
 app.post('/api/register', (req, res, next) => {
   const register = require('./src/repository/register/register').register
@@ -115,7 +111,7 @@ app.post('/api/register', (req, res, next) => {
       db.end()
     }
   }
-})
+});
 
 app.post('/api/forget', (req, res, next) => {
   const forget = require('./src/repository/forget/forget').forget
@@ -129,47 +125,46 @@ app.post('/api/forget', (req, res, next) => {
     res.send(result)
     db.end()
   }
-})
+});
 
 app.get('/product/getImas', (req, res, next) => {
   db.query(`SELECT * FROM ${globalThis.productImage}`, (err, data) => {
     let result = {
       code: 200,
-    }
+    };
     if (err) {
-      console.log(err)
-      result.code = 500
-      result.message = '服务器异常'
-      res.send(result)
+      console.log(err);
+      result.code = 500;
+      result.message = '服务器异常';
+      res.send(result);
       db.end()
     } else {
-      res.send(data)
+      res.send(data);
       db.end()
     }
   })
-})
+});
 
 app.get('/product/getIma', (req, res, next) => {
   utils.getImage(req, res ,db)
-})
+});
 
 app.get('/profiles/changeDatum', (req, res, next) => {
   const changeDatum = require('./src/repository/profiles/changeDatum').changeDatum
   changeDatum(req, res, db)
-})
+});
 
 app.post('/profiles/saveDatum', (req, res, next) => {
   const saveDatum = require('./src/repository/profiles/saveDatum').saveDatum
   saveDatum(req, res, db)
-})
+});
 
 app.post('/profiles/changePassword', (req, res, next) => {
   const changePassword = require('./src/repository/profiles/changePassword').changePassword
   changePassword(req, res, db)
-})
-
+});
 
 app.post('/profiles/avatar', (req, res, next) => {
   const avatar = require('./src/repository/profiles/avatar').avatar
   avatar(req, res, db)
-})
+});

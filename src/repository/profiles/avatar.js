@@ -12,7 +12,7 @@ module.exports.avatar = function (req, res, db) {
     if (file.tmpFile) {
       filePath = file.tmpFile.path;
     } else {
-      for (var key in file) {
+      for (let key in file) {
         if (file[key].path && filePath === '') {
           filePath = file[key].path;
           break;
