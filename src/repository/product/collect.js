@@ -18,21 +18,33 @@ module.exports.collect = function (req, res, db) {
         } else {
           const arr = data[0].collect.split(',');
           arr.push(req.body.params.id + '');
+          if (arr[0] === '') {
+            arr.splice(0,1)
+          }
           collect = [...new Set(arr)].join();
         }
-        db.query(`UPDATE ${globalThis.profiles} SET collect = '${collect}' WHERE phone_number = '${req.body.params.userId}'`, (err, data) => {
-          if (err) {
-            console.log(err);
-            result.code = 500;
-            result.msg = '收藏失败：服务异常';
-            res.send(result);
-            db.end();
-          } else {
-            res.send(result);
-            db.end()
-          }
-        })
       }
+      if (+req.body.params.state === 1) {
+        // const arr = data[0].collect.split(',');
+        const arr = data[0].collect.split(',').filter(o => o !== req.body.params.id + '');
+        if (arr[0] === '') {
+          arr.splice(0,1)
+        }
+        collect = [...new Set(arr)].join();
+      }
+      db.query(`UPDATE ${globalThis.profiles} SET collect = '${collect}' WHERE phone_number = '${req.body.params.userId}'`, (err, data) => {
+        if (err) {
+          console.log(err);
+          result.code = 500;
+          result.msg = +req.body.params.state === 0 ? '收藏失败：服务异常' : '取消收藏失败：服务异常';
+          res.send(result);
+          db.end();
+        } else {
+          result.msg = +req.body.params.state === 0 ? '收藏成功' : '取消收藏成功';
+          res.send(result);
+          db.end()
+        }
+      })
     }
   })
 };

@@ -2,7 +2,7 @@ const mysql = require('mysql')
 globalThis.userInfoTable = 'user_info'
 
 handleError = function () {
-  let db
+  let db;
   db = mysql.createConnection({
     // 生产环境
     // host: '121.196.167.112',
