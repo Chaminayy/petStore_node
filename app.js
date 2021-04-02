@@ -32,23 +32,23 @@ let code = null; // 全局存储验证码
 
 function sendEMail (req, res, next) {
   const sendMail = require('./src/repository/register/sendMail').sendMail
-  let email = req.body.params.email
-  code = Math.floor(Math.random() * 1000000)
-  time = new Date().getTime()
+  let email = req.body.params.email;
+  code = Math.floor(Math.random() * 1000000);
+  time = new Date().getTime();
   sendMail(email, '验证码', code, (err, data) => {
     if (err) {
-      console.log(err)
+      console.log(err);
       let result = {
         code: 500,
         message: '验证码发送失败'
-      }
+      };
       res.send(result)
     } else {
       let result = {
         code: 200,
         authCode: code,
         message: '验证码发送成功'
-      }
+      };
       res.send(result)
     }
   })
@@ -127,8 +127,8 @@ app.post('/api/forget', (req, res, next) => {
     let result = {
       code: 500,
       message: '两次密码不一致'
-    }
-    res.send(result)
+    };
+    res.send(result);
     db.end()
   }
 });
@@ -187,24 +187,7 @@ app.put('/product/collect', (req, res, next) => {
 });
 
 app.put('/profiles/subscribe', (req, res, next) => {
-  const userData = req.body.params;
-  const sql1 = `UPDATE ${globalThis.profiles} SET order_phone = '${userData.phoneNumber}', order_name = '${userData.userName}', order_email = '${userData.email}', order_state = '${userData.state}', order_remark = '${userData.remark}', order_time = '${userData.orderTime}' WHERE phone_number = '${userData.userId}'`;
-  const sql2 = `UPDATE ${globalThis.profiles} SET order_state = '${userData.state}' WHERE phone_number = '${userData.userId}'`;
-  db.query(+userData.state === 1 ? sql1 : sql2, (err, data) => {
-    const result = {
-      code: 200,
-      msg: +userData.state === 1 ? '预约成功' : '取消预约成功'
-    };
-    if (err) {
-      console.log(err);
-      result.code = 500;
-      result.msg = +userData.state === 1 ? '预约失败：服务异常' : '取消预约失败：服务异常';
-      res.send(result);
-      db.end();
-    } else {
-      res.send(result);
-      db.end();
-    }
-  })
+  const subscribe = require('./src/repository/profiles/subscribe').subscribe
+  subscribe(req, res, db)
 });
 
